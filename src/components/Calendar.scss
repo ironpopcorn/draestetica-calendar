@@ -1,0 +1,26 @@
+.calendar {
+  &-day {
+    width: 14.28%;
+    height: 50px;
+    display: inline-block;
+
+    &-blank {
+
+    }
+
+    &-disabled {
+      background-color: grey;
+      color: black;
+    }
+
+    &-available {
+      background-color: green;
+      color: white;
+    }
+
+    &-unavailable {
+      background-color: red;
+      color: white;
+    }
+  }
+}
