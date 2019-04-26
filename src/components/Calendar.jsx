@@ -14,7 +14,7 @@ class Calendar extends Component {
     };
     this.nextMonth = this.nextMonth.bind(this);
     this.previousMonth = this.previousMonth.bind(this);
-    this.handleweekdayChange = this.handleWeekdayChange.bind(this);
+    this.handleWeekdayChange = this.handleWeekdayChange.bind(this);
     this.handleDayClick = this.handleDayClick.bind(this);
   }
 
@@ -34,7 +34,8 @@ class Calendar extends Component {
       date.setDate(1);
     }
 
-    this.setState({ date });
+    // this.setState({ date });
+    this.props.setDate(date);
   }
 
   previousMonth() {
@@ -54,7 +55,8 @@ class Calendar extends Component {
         date.setDate(1);
       }
 
-      this.setState({ date });
+      // this.setState({ date });
+      this.props.setDate(date);
     }
   }
 
@@ -69,7 +71,8 @@ class Calendar extends Component {
   handleDayClick(day) {
     const { date } = this.props;
     date.setDate(day);
-    this.setState({ date });
+    // this.setState({ date });
+    this.props.setDate(date);
   }
 
   static renderweekdays() {
@@ -143,7 +146,7 @@ class Calendar extends Component {
     const { availableDays } = this.state;
     const iterator = Object.keys(days);
     return iterator.map(day => (
-      <input key={`checkbox-${day}`} name={days[day]} type="checkbox" value={availableDays[day]} checked={availableDays[day]} onChange={this.handleweekdayChange} />
+      <input key={`checkbox-${day}`} name={days[day]} type="checkbox" value={availableDays[day]} checked={availableDays[day]} onChange={this.handleWeekdayChange} />
     ));
   }
 
@@ -183,6 +186,7 @@ class Calendar extends Component {
 
 Calendar.propTypes = {
   date: PropTypes.object.isRequired,
+  setDate: PropTypes.func.isRequired,
 };
 
 export default Calendar;
