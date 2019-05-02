@@ -6,28 +6,37 @@ class Main extends Component {
     super(prop);
     this.state = {
       date: new Date(),
+      availableDays: [0, 0, 0, 0, 0, 0, 0],
     };
     this.setDate = this.setDate.bind(this);
   }
 
+  componentDidMount() {
+    this.fetchTest();
+  }
+
   setDate(date) {
-    Main.fetchTest();
     this.setState({ date });
   }
 
-  static fetchTest() {
-    fetch('http://localhost/draestetica.com/calendar/test', {
-      mode: 'cors', // no-cors, cors, *same-origin
+  setAvailableDays(availableDays) {
+    this.setState({ availableDays });
+  }
+
+  fetchTest() {
+    fetch('http://localhost/draestetica.com/calendar/availabledays', {
+      mode: 'cors',
     })
-      .then((response) => { console.log(response) });
-      // .then((response) => { response.json(); });
-      // .then(myJson => console.log(JSON.stringify(myJson)))
-      // .catch(error => console.error(error));
+      .then(response => response.json())
+      .then(myJson => this.setAvailableDays(myJson));
   }
 
   render() {
     return (
-        <Calendar date={this.state.date} setDate={this.setDate} />
+        <Calendar
+          date={this.state.date}
+          setDate={this.setDate}
+          availableDays={this.state.availableDays} />
     );
   }
 }

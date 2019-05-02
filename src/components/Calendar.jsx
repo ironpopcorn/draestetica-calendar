@@ -10,10 +10,11 @@ class Calendar extends Component {
   constructor(prop) {
     super(prop);
     this.state = {
-      availableDays: [0, 1, 1, 1, 1, 1, 0],
+      showDay: false,
     };
     this.nextMonth = this.nextMonth.bind(this);
     this.previousMonth = this.previousMonth.bind(this);
+    this.backButton = this.backButton.bind(this);
     this.handleWeekdayChange = this.handleWeekdayChange.bind(this);
     this.handleDayClick = this.handleDayClick.bind(this);
   }
@@ -34,7 +35,6 @@ class Calendar extends Component {
       date.setDate(1);
     }
 
-    // this.setState({ date });
     this.props.setDate(date);
   }
 
@@ -55,13 +55,16 @@ class Calendar extends Component {
         date.setDate(1);
       }
 
-      // this.setState({ date });
       this.props.setDate(date);
     }
   }
 
+  backButton() {
+    this.setState({ showDay: false });
+  }
+
   handleWeekdayChange(e) {
-    const { availableDays } = this.state;
+    const { availableDays } = this.props;
     const day = Calendar.getKeyByValue(days, e.target.name);
 
     availableDays[day] = (parseInt(e.target.value, 0) === 0) ? 1 : 0;
@@ -70,9 +73,10 @@ class Calendar extends Component {
 
   handleDayClick(day) {
     const { date } = this.props;
+
     date.setDate(day);
-    // this.setState({ date });
     this.props.setDate(date);
+    this.setState({ showDay: true });
   }
 
   static renderweekdays() {
@@ -95,7 +99,7 @@ class Calendar extends Component {
     }
 
     for (let i = 1; i <= lastDay; i++) {
-      calendar.push(this.renderDay(i, weekday));
+      calendar.push(this.renderCalendarDay(i, weekday));
       weekday = (weekday === 6) ? 0 : weekday + 1;
     }
 
@@ -106,11 +110,22 @@ class Calendar extends Component {
       }
     }
 
-    return calendar;
+    return (
+      <section>
+        <div className="row">
+          {Calendar.renderweekdays()}
+          {calendar}
+        </div>
+        <div className="row">
+          {this.renderPreviousMonthButton()}
+          {this.renderNextMonthButton()}
+        </div>
+      </section>
+    );
   }
 
-  renderDay(day, weekday) {
-    const { availableDays } = this.state;
+  renderCalendarDay(day, weekday) {
+    const { availableDays } = this.props;
     const calendar = [];
 
     let classes;
@@ -126,8 +141,24 @@ class Calendar extends Component {
     }
 
     calendar.push(<div key={`day-${day}`} weekday={`weekday-${weekday}`} className={classes} onClick={() => this.handleDayClick(day)}>{day}</div>);
-
     return calendar;
+  }
+
+  renderDay() {
+    const { date } = this.props;
+    const options = {
+      weekday: 'long',
+      year: 'numeric',
+      month: 'long',
+      day: 'numeric',
+    };
+
+    return (
+      <section>
+        <h2>{ date.toLocaleDateString('es-ES', options) }</h2>
+        <button onClick={this.backButton}>Volver</button>
+      </section>
+    );
   }
 
   renderMonth() {
@@ -140,14 +171,6 @@ class Calendar extends Component {
 
   renderPreviousMonthButton() {
     return <button onClick={this.previousMonth}>Previous Month</button>;
-  }
-
-  renderControls() {
-    const { availableDays } = this.state;
-    const iterator = Object.keys(days);
-    return iterator.map(day => (
-      <input key={`checkbox-${day}`} name={days[day]} type="checkbox" value={availableDays[day]} checked={availableDays[day]} onChange={this.handleWeekdayChange} />
-    ));
   }
 
   static daysInMonth(month, year) {
@@ -168,17 +191,9 @@ class Calendar extends Component {
         <div className="row text-center">
           <h2>{this.props.date.getFullYear()} {this.renderMonth()}</h2>
         </div>
-        <div className="row">
-          {Calendar.renderweekdays()}
-          {this.renderCalendar()}
-        </div>
-        <div className="row">
-          {this.renderPreviousMonthButton()}
-          {this.renderNextMonthButton()}
-        </div>
-        <div className="row">
-          {this.renderControls()}
-        </div>
+        { (this.state.showDay === true)
+          ? this.renderDay()
+          : this.renderCalendar() }
       </div>
     );
   }
@@ -187,6 +202,7 @@ class Calendar extends Component {
 Calendar.propTypes = {
   date: PropTypes.object.isRequired,
   setDate: PropTypes.func.isRequired,
+  availableDays: PropTypes.array.isRequired,
 };
 
 export default Calendar;
