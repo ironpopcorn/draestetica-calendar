@@ -177,6 +177,18 @@ class Calendar extends Component {
     return 32 - new Date(year, month, 32).getDate();
   }
 
+  static finalDateInMonth(month, year) {
+    return new Date(
+      year,
+      month,
+      Calendar.daysInMonth(month, year),
+    );
+  }
+
+  static dateToUnixTimestamp(date) {
+    return parseInt((date.getTime() / 1000).toFixed(0), 0);
+  }
+
   static capitalizeFirstLetter(string) {
     return string.charAt(0).toUpperCase() + string.slice(1);
   }
