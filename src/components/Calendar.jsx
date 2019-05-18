@@ -15,6 +15,7 @@ class Calendar extends Component {
     this.nextMonth = this.nextMonth.bind(this);
     this.previousMonth = this.previousMonth.bind(this);
     this.backButton = this.backButton.bind(this);
+    this.saveAppointment = this.saveAppointment.bind(this);
     this.handleWeekdayChange = this.handleWeekdayChange.bind(this);
     this.handleDayClick = this.handleDayClick.bind(this);
   }
@@ -60,6 +61,11 @@ class Calendar extends Component {
   }
 
   backButton() {
+    this.setState({ showDay: false });
+  }
+
+  saveAppointment() {
+    this.props.fetchSaveAppointment(this.props.date);
     this.setState({ showDay: false });
   }
 
@@ -156,6 +162,7 @@ class Calendar extends Component {
     return (
       <section>
         <h2>{ date.toLocaleDateString('es-ES', options) }</h2>
+        <button onClick={this.saveAppointment}>Agendar Cita</button>
         <button onClick={this.backButton}>Volver</button>
       </section>
     );
@@ -214,6 +221,7 @@ class Calendar extends Component {
 Calendar.propTypes = {
   date: PropTypes.object.isRequired,
   setDate: PropTypes.func.isRequired,
+  fetchSaveAppointment: PropTypes.func.isRequired,
   availableDays: PropTypes.array.isRequired,
 };
 

@@ -1,7 +1,7 @@
 import React, { Component } from 'react';
 import Calendar from './Calendar';
 
-const baseUrl = 'http://localhost/draestetica.com';
+const baseUrl = 'http://localhost/draestetica.com/calendar/';
 
 class Main extends Component {
   constructor(prop) {
@@ -19,7 +19,6 @@ class Main extends Component {
   }
 
   setDate(date) {
-    this.fetchAppointmentsByMonth();
     this.setState({ date });
   }
 
@@ -28,7 +27,7 @@ class Main extends Component {
   }
 
   fetchAvailableDays() {
-    fetch(`${baseUrl}/calendar/availabledays`, {
+    fetch(`${baseUrl}availabledays`, {
       mode: 'cors',
     })
       .then(response => response.json())
@@ -42,17 +41,33 @@ class Main extends Component {
     const finalDate = Calendar.dateToUnixTimestamp(
       Calendar.finalDateInMonth(date.getMonth(), date.getFullYear()),
     );
+    const body = JSON.stringify({
+      startDate,
+      finalDate,
+    });
 
-    fetch(`${baseUrl}/calendar/appointmentsbymonth`, {
+    this.fetchApi('appointmentsbymonth', body);
+  }
+
+  fetchSaveAppointment(date) {
+    const userId = 1;
+    const dateTime = Calendar.dateToUnixTimestamp(date);
+    const body = JSON.stringify({
+      userId,
+      dateTime,
+    });
+
+    this.fetchApi('saveappointment', body);
+  }
+
+  fetchApi(url, body = {}) {
+    fetch(`${baseUrl + url}`, {
       mode: 'cors',
       method: 'post',
       headers: {
         'Content-Type': 'application/json',
       },
-      body: JSON.stringify({
-        startDate,
-        finalDate,
-      }),
+      body,
     })
       .then(response => response.json())
       .then(myJson => console.log(myJson))
@@ -64,6 +79,7 @@ class Main extends Component {
         <Calendar
           date={this.state.date}
           setDate={this.setDate}
+          fetchSaveAppointment={this.fetchSaveAppointment}
           availableDays={this.state.availableDays} />
     );
   }
