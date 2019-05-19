@@ -4,9 +4,9 @@ import './index.css';
 import Main from './components/Main';
 import * as serviceWorker from './serviceWorker';
 
-ReactDOM.render(<Main />, document.getElementById('root'));
+window.userId = 1;
+window.serviceId = 1;
+window.mode = 0;
 
-// If you want your app to work offline and load faster, you can change
-// unregister() to register() below. Note this comes with some pitfalls.
-// Learn more about service workers: https://bit.ly/CRA-PWA
+ReactDOM.render(<Main />, document.getElementById('root'));
 serviceWorker.unregister();

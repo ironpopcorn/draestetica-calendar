@@ -10,14 +10,14 @@ class Calendar extends Component {
   constructor(prop) {
     super(prop);
     this.state = {
-      showDay: false,
+      showDate: false,
+      selected: null,
     };
     this.nextMonth = this.nextMonth.bind(this);
     this.previousMonth = this.previousMonth.bind(this);
-    this.backButton = this.backButton.bind(this);
     this.saveAppointment = this.saveAppointment.bind(this);
-    this.handleWeekdayChange = this.handleWeekdayChange.bind(this);
     this.handleDayClick = this.handleDayClick.bind(this);
+    this.handleHourClick = this.handleHourClick.bind(this);
   }
 
   nextMonth() {
@@ -36,7 +36,8 @@ class Calendar extends Component {
       date.setDate(1);
     }
 
-    this.props.setDate(date);
+    this.props.setDate(date, true);
+    this.setState({ showDate: false });
   }
 
   previousMonth() {
@@ -56,37 +57,28 @@ class Calendar extends Component {
         date.setDate(1);
       }
 
-      this.props.setDate(date);
+      this.props.setDate(date, true);
+      this.setState({ showDate: false });
     }
   }
 
-  backButton() {
-    this.setState({ showDay: false });
-  }
-
   saveAppointment() {
-    this.props.fetchSaveAppointment(this.props.date);
-    this.setState({ showDay: false });
-  }
-
-  handleWeekdayChange(e) {
-    const { availableDays } = this.props;
-    const day = Calendar.getKeyByValue(days, e.target.name);
-
-    availableDays[day] = (parseInt(e.target.value, 0) === 0) ? 1 : 0;
-    this.setState({ availableDays });
+    this.props.fetchSaveAppointment(this.state.selected);
   }
 
   handleDayClick(day) {
     const { date } = this.props;
-
     date.setDate(day);
     this.props.setDate(date);
-    this.setState({ showDay: true });
+    this.setState({ showDate: true, selected: null });
+  }
+
+  handleHourClick(selected) {
+    this.setState({ selected });
   }
 
   static renderweekdays() {
-    return days.map(day => <div key={`weekday-${day}`} className="calendar-day">{Calendar.capitalizeFirstLetter(day)}</div>);
+    return days.map(day => <div key={`weekday-${day}`} className='calendar-day'>{Calendar.capitalizeFirstLetter(day)}</div>);
   }
 
   renderCalendar() {
@@ -101,7 +93,7 @@ class Calendar extends Component {
     let weekday = firstweekday;
 
     for (let i = lastDayPreviousMonth - firstweekday + 1; i <= lastDayPreviousMonth; i++) {
-      calendar.push(<div key={`blank-${i}`} className="calendar-day calendar-day-blank">{`${i}`}</div>);
+      calendar.push(<div key={`blank-${i}`} className='calendar-day calendar-day-blank'>{`${i}`}</div>);
     }
 
     for (let i = 1; i <= lastDay; i++) {
@@ -111,18 +103,18 @@ class Calendar extends Component {
 
     if (firstDayNextMonth !== 0) {
       for (let i = firstDayNextMonth; i <= 6; i++) {
-        calendar.push(<div key={`blank-${i}`} className="calendar-day calendar-day-blank">{`${day}`}</div>);
+        calendar.push(<div key={`blank-${i}`} className='calendar-day calendar-day-blank'>{`${day}`}</div>);
         day += 1;
       }
     }
 
     return (
       <section>
-        <div className="row">
+        <div className='row'>
           {Calendar.renderweekdays()}
           {calendar}
         </div>
-        <div className="row">
+        <div className='row'>
           {this.renderPreviousMonthButton()}
           {this.renderNextMonthButton()}
         </div>
@@ -131,26 +123,37 @@ class Calendar extends Component {
   }
 
   renderCalendarDay(day, weekday) {
-    const { availableDays } = this.props;
+    const { showDate } = this.state;
+    const { availableDays, date } = this.props;
     const calendar = [];
 
-    let classes;
+    let classes = 'calendar-day calendar-day-disabled';
+    let click;
 
     if (today.getMonth() === this.props.date.getMonth()) {
-      classes = (day >= today.getDate() && availableDays[weekday] === 1)
-        ? 'calendar-day calendar-day-available'
-        : 'calendar-day calendar-day-disabled';
-    } else {
-      classes = (availableDays[weekday] === 1)
-        ? 'calendar-day calendar-day-available'
-        : 'calendar-day calendar-day-disabled';
+      if (availableDays[weekday] === 1) {
+        if (day === date.getDate() && showDate) {
+          classes = 'calendar-day calendar-day-selected';
+        } else if (day >= today.getDate()) {
+          classes = 'calendar-day calendar-day-available';
+          click = () => this.handleDayClick(day);
+        }
+      }
+    } else if (availableDays[weekday] === 1) {
+      if (day === date.getDate() && showDate) {
+        classes = 'calendar-day calendar-day-selected';
+      } else {
+        classes = 'calendar-day calendar-day-available';
+        click = () => this.handleDayClick(day);
+      }
     }
 
-    calendar.push(<div key={`day-${day}`} weekday={`weekday-${weekday}`} className={classes} onClick={() => this.handleDayClick(day)}>{day}</div>);
+    calendar.push(<div key={`day-${day}`} weekday={`weekday-${weekday}`} className={classes} onClick={click}>{day}</div>);
     return calendar;
   }
 
   renderDay() {
+    const { showDate } = this.state;
     const { date } = this.props;
     const options = {
       weekday: 'long',
@@ -159,12 +162,54 @@ class Calendar extends Component {
       day: 'numeric',
     };
 
+    if (showDate) {
+      return (
+        <section className='view'>
+          <h2>{ date.toLocaleDateString('es-ES', options) }</h2>
+          {this.renderHours(date)}
+          {this.state.selected
+            && <button onClick={this.saveAppointment}>Agendar Cita</button>
+          }
+        </section>
+      );
+    }
+    return null;
+  }
+
+  renderHours(date) {
+    const { selected } = this.state;
+    const { appointments } = this.props;
+    let availableHours = [];
+
+    for (let h = 0; h < 10; h++) {
+      availableHours.push(
+        new Date(date.getFullYear(), date.getMonth(), date.getDate(), 8 + h, 0, 0, 0),
+      );
+    }
+
+    appointments.map((appointment) => {
+      const datetime = new Date(appointment.dateTime * 1000);
+      if (date.getMonth() === datetime.getMonth()
+          && date.getDate() === datetime.getDate()) {
+        availableHours = availableHours.filter(h => h.getHours() !== datetime.getHours());
+      }
+      return null;
+    });
+
     return (
-      <section>
-        <h2>{ date.toLocaleDateString('es-ES', options) }</h2>
-        <button onClick={this.saveAppointment}>Agendar Cita</button>
-        <button onClick={this.backButton}>Volver</button>
-      </section>
+      <ul>
+        {availableHours.map((hour, i) => (
+          <li key={`hour-${i}`}>
+            <button type='button'
+              className={hour.getHours() === (selected && selected.getHours()) ? 'selected' : ''}
+              onClick={() => this.handleHourClick(hour)}>
+              {`${hour.getHours() < 10 ? '0' : ''}${hour.getHours()}:00`}
+              &nbsp;-&nbsp;
+              {`${hour.getHours() + 1 < 10 ? '0' : ''}${hour.getHours() + 1}:00`}
+            </button>
+          </li>
+        ))}
+      </ul>
     );
   }
 
@@ -206,13 +251,18 @@ class Calendar extends Component {
 
   render() {
     return (
-      <div className="calendar">
-        <div className="row text-center">
+      <div className='calendar'>
+        <div className='row text-center'>
           <h2>{this.props.date.getFullYear()} {this.renderMonth()}</h2>
         </div>
-        { (this.state.showDay === true)
-          ? this.renderDay()
-          : this.renderCalendar() }
+        <div className='container'>
+          <div className='container-left'>
+            {this.renderCalendar()}
+          </div>
+          <div className='container-right'>
+            {this.renderDay()}
+          </div>
+        </div>
       </div>
     );
   }
@@ -223,6 +273,7 @@ Calendar.propTypes = {
   setDate: PropTypes.func.isRequired,
   fetchSaveAppointment: PropTypes.func.isRequired,
   availableDays: PropTypes.array.isRequired,
+  appointments: PropTypes.array,
 };
 
 export default Calendar;

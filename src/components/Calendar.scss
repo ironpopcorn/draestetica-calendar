@@ -1,26 +1,69 @@
 .calendar {
+  .container {
+    display: flex;
+    flex-direction: row;
+    flex-flow: row;
+    align-items: flex-start;
+    align-content: flex-start;
+    
+    &-left {
+      display: inline-flex;
+    }
+
+    &-right {
+      display: inline-flex;
+    }
+  }
+
   &-day {
-    width: 14.28%;
+    width: 13.28%;
     height: 50px;
+    padding-left: 5px;
     display: inline-block;
 
     &-blank {
-
+      background-color: #d0d0d0;
     }
 
     &-disabled {
-      background-color: grey;
-      color: black;
+      background-color: #e6e6e6;
     }
 
     &-available {
-      background-color: green;
-      color: white;
+      background-color: white;
+      cursor: pointer;
     }
 
     &-unavailable {
-      background-color: red;
+      background-color: #ff5151;
       color: white;
+    }
+
+    &-selected {
+      background-color: #5151ff;
+      color: white;
+    }
+  }
+  
+  .view {
+    ul {
+      margin: 0;
+      padding: 0;
+
+      li {
+        list-style: none;
+        margin-top: 0.35em;
+        
+        button {
+          padding: 0.35em;
+        }
+        
+        .selected {
+          background-color: #5151ff;
+          color: white;
+          border: double;
+        }
+      }
     }
   }
 }

@@ -1,7 +1,22 @@
 import React, { Component } from 'react';
 import Calendar from './Calendar';
+import Confirmation from './Confirmation';
 
-const baseUrl = 'http://localhost/draestetica.com/calendar/';
+const baseUrl = 'http://localhost:30000/calendar/';
+
+const fetchApi = (url, body = {}, callback) => {
+  fetch(`${baseUrl + url}`, {
+    mode: 'cors',
+    method: 'post',
+    headers: {
+      'Content-Type': 'application/json',
+    },
+    body,
+  })
+    .then(response => response.json())
+    .then(myJson => callback(myJson))
+    .catch(error => console.error(error));
+};
 
 class Main extends Component {
   constructor(prop) {
@@ -10,16 +25,24 @@ class Main extends Component {
       date: new Date(),
       availableDays: [0, 0, 0, 0, 0, 0, 0],
       userId: window.userId,
+      serviceId: window.serviceId,
+      mode: window.mode,
+      appointments: null,
+      saved: false,
     };
     this.setDate = this.setDate.bind(this);
   }
 
   componentDidMount() {
     this.fetchAvailableDays();
+    this.fetchAppointmentsByMonth();
   }
 
-  setDate(date) {
+  setDate(date, fetch = false) {
     this.setState({ date });
+    if (fetch) {
+      this.fetchAppointmentsByMonth();
+    }
   }
 
   setAvailableDays(availableDays) {
@@ -36,51 +59,46 @@ class Main extends Component {
   }
 
   fetchAppointmentsByMonth() {
-    const { date } = this.state;
+    const { date, serviceId } = this.state;
     const startDate = Calendar.dateToUnixTimestamp(date);
     const finalDate = Calendar.dateToUnixTimestamp(
       Calendar.finalDateInMonth(date.getMonth(), date.getFullYear()),
     );
     const body = JSON.stringify({
+      serviceId,
       startDate,
       finalDate,
     });
 
-    this.fetchApi('appointmentsbymonth', body);
+    fetchApi('appointmentsbymonth', body, appointments => this.setState({ appointments }));
   }
 
   fetchSaveAppointment(date) {
-    const userId = 1;
+    const { userId, serviceId, mode } = this.state;
     const dateTime = Calendar.dateToUnixTimestamp(date);
     const body = JSON.stringify({
       userId,
+      serviceId,
       dateTime,
     });
 
-    this.fetchApi('saveappointment', body);
-  }
-
-  fetchApi(url, body = {}) {
-    fetch(`${baseUrl + url}`, {
-      mode: 'cors',
-      method: 'post',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body,
-    })
-      .then(response => response.json())
-      .then(myJson => console.log(myJson))
-      .catch(error => console.error(error));
+    fetchApi(`saveappointment?mode=${mode}`, body, saved => this.setState({ date, saved }));
   }
 
   render() {
+    const { date, saved } = this.state;
+
+    if (saved) {
+      return <Confirmation date={date} />;
+    }
+
     return (
-        <Calendar
-          date={this.state.date}
-          setDate={this.setDate}
-          fetchSaveAppointment={this.fetchSaveAppointment}
-          availableDays={this.state.availableDays} />
+      <Calendar
+        date={date}
+        setDate={this.setDate}
+        fetchSaveAppointment={datetime => this.fetchSaveAppointment(datetime)}
+        availableDays={this.state.availableDays}
+        appointments={this.state.appointments} />
     );
   }
 }
